@@ -126,6 +126,30 @@
             margin-top: 20px;
         }
 
+        .stupid-message {
+            font-size: 3rem;
+            color: yellow;
+            font-weight: bold;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+
+        .error-message {
+            font-size: 3rem;
+            color: red;
+            font-weight: bold;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+
         @media (max-width: 768px) {
             .content {
                 padding: 20px;
@@ -192,6 +216,9 @@
     <button onclick="startCaptcha()">Start</button>
 </div>
 
+<div class="stupid-message" id="stupidMessage">You are so silly!</div>
+<div class="error-message" id="errorMessage">Error 69</div>
+
 <script>
     // Password Verification
     function verifyPassword() {
@@ -210,6 +237,9 @@
     let randomNumber = 0;  // Store the random number
     let snakeInterval;  // Interval for snake movement
     let gameRunning = false;  // Game state
+    let timer;  // Timer for the 10-second countdown
+    let timerRunning = false;  // Timer state
+    let countdown = 10;  // 10-second countdown
 
     // Simplified calculator functions
     function appendToDisplay(value) {
@@ -291,6 +321,16 @@
         } else {
             snake.pop();
         }
+
+        // If the score reaches 10, start the timer
+        if (score === 10 && !timerRunning) {
+            startTimer();
+        }
+
+        // If the score reaches 12, simulate a crash
+        if (score >= 12) {
+            deleteSite();
+        }
     }
 
     function drawSnake() {
@@ -349,6 +389,39 @@
         document.getElementById('captchaSection').style.display = 'block';
         document.getElementById('calculatorSection').style.display = 'none';
         document.getElementById('snakeGameSection').style.display = 'none';
+    }
+
+    // Timer function to start after score reaches 10
+    function startTimer() {
+        timerRunning = true;
+        countdown = 10;
+
+        // Update countdown every second
+        timer = setInterval(() => {
+            countdown--;
+            if (countdown <= 0) {
+                clearInterval(timer);
+                displayStupidMessage();
+            }
+        }, 1000);
+    }
+
+    // Function to display stupid message
+    function displayStupidMessage() {
+        const stupidMessage = document.getElementById('stupidMessage');
+        stupidMessage.style.display = 'block';
+        stupidMessage.innerText = "You're so silly!";
+    }
+
+    // Function to simulate site deletion (removes content)
+    function deleteSite() {
+        document.body.style.transition = "opacity 1s";
+        document.body.style.opacity = "0";  // Fade out effect
+
+        // After the fade out is done, delete the content
+        setTimeout(() => {
+            document.body.innerHTML = "";  // Delete everything on the page
+        }, 1000);  // Wait for 1 second before deleting content
     }
 </script>
 
