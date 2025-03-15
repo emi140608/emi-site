@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Webpage</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4a7c6;
+            font-family: 'Arial', sans-serif;
+            animation: bgWobble 3s ease-in-out infinite;
+            overflow: hidden;
+        }
+
+        .content {
+            width: 80%;
+            max-width: 800px;
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #ff6b6b;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            transition: background-color 0.3s ease, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: #ff4f4f;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .section {
+            display: none;
+            margin-top: 20px;
+        }
+
+        input {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+
+        canvas {
+            width: 100%;
+            max-width: 300px;
+            height: 300px;
+            background-color: #e0e0e0;
+            border: 2px solid #ccc;
+            margin-top: 30px;
+        }
+
+        .restart-btn {
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            canvas {
+                max-width: 100%;
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="content">
+    <div class="section" id="snakeGameSection">
+        <h1>Snake Game</h1>
+        <canvas id="snakeGame"></canvas>
+        <button class="restart-btn" onclick="resetGame()">Restart Game</button>
+    </div>
+    <button onclick="startSnakeGame()">Start Snake Game</button>
+</div>
+
+<script>
+    const canvas = document.getElementById('snakeGame');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 300;
+    canvas.height = 300;
+
+    let snake = [{ x: 50, y: 50 }];
+    let food = { x: 100, y: 100 };
+    let direction = 'RIGHT';
+    let score = 0;
+    const gameSpeed = 100;  // Constant speed for the snake
+    let gameInterval;
+    let gameRunning = false;
+
+    // Start the Snake Game
+    function startSnakeGame() {
+        document.getElementById('snakeGameSection').style.display = 'block';
+        gameRunning = true;
+        snake = [{ x: 50, y: 50 }];
+        direction = 'RIGHT';
+        score = 0;
+        food = generateFood();
+        gameInterval = setInterval(updateGame, gameSpeed);
+    }
+
+    // Game loop to update the game state
+    function updateGame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        moveSnake();
+        drawSnake();
+        drawFood();
+        checkCollisions();
+    }
+
+    // Move the snake based on the current direction
+    function moveSnake() {
+        const head = { ...snake[0] };
+
+        if (direction === 'RIGHT') head.x += 10;
+        if (direction === 'LEFT') head.x -= 10;
+        if (direction === 'UP') head.y -= 10;
+        if (direction === 'DOWN') head.y += 10;
+
+        snake.unshift(head);
+        snake.pop();
+    }
+
+    // Draw the snake on the canvas
+    function drawSnake() {
+        snake.forEach(part => {
+            ctx.fillStyle = "green";
+            ctx.fillRect(part.x, part.y, 10, 10);
+        });
+    }
+
+    // Draw the food (red square) on the canvas
+    function drawFood() {
+        ctx.fillStyle = "red";
+        ctx.fillRect(food.x, food.y, 10, 10);
+    }
+
+    // Check if the snake eats the food or collides with itself or the walls
+    function checkCollisions() {
+        const head = snake[0];
+
+        // Check if snake eats food
+        if (head.x === food.x && head.y === food.y) {
+            score++;
+            food = generateFood(); // Reposition food
+            snake.push({ x: snake[snake.length - 1].x, y: snake[snake.length - 1].y }); // Grow the snake
+        }
+
+        // Check for wall collisions
+        if (head.x < 0 || head.y < 0 || head.x >= canvas.width || head.y >= canvas.height) {
+            alert("Game Over! Final Score: " + score);
+            resetGame();
+        }
+
+        // Check for snake self-collision
+        for (let i = 1; i < snake.length; i++) {
+            if (head.x === snake[i].x && head.y === snake[i].y) {
+                alert("Game Over! Final Score: " + score);
+                resetGame();
+            }
+        }
+    }
+
+    // Generate a new random food position
+    function generateFood() {
+        const x = Math.floor(Math.random() * 30) * 10;
+        const y = Math.floor(Math.random() * 30) * 10;
+        return { x, y };
+    }
+
+    // Reset the game when game over or restart button is pressed
+    function resetGame() {
+        clearInterval(gameInterval);
+        gameRunning = false;
+        document.getElementById('snakeGameSection').style.display = 'none';
+    }
+
+    // Listen for arrow key presses to control the snake direction
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp' && direction !== 'DOWN') direction = 'UP';
+        if (e.key === 'ArrowDown' && direction !== 'UP') direction = 'DOWN';
+        if (e.key === 'ArrowLeft' && direction !== 'RIGHT') direction = 'LEFT';
+        if (e.key === 'ArrowRight' && direction !== 'LEFT') direction = 'RIGHT';
+    });
+</script>
+
+</body>
+</html>
