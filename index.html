@@ -204,6 +204,8 @@
             <button class="calc-btn" onclick="clearDisplay()">C</button>
             <button class="calc-btn" onclick="triggerSnakeGame()">=</button>
             <button class="calc-btn" onclick="appendToDisplay('+')">+</button>
+            <!-- AI Button -->
+            <button class="calc-btn" onclick="showAIInput()">AI</button>
         </div>
     </div>
 
@@ -275,6 +277,15 @@
                 startSnakeGame();
             }
             equalPressCount = 0;
+        }
+    }
+
+    // AI Question Function
+    function showAIInput() {
+        const userQuestion = prompt("Ask AI a question:");
+
+        if (userQuestion) {
+            alert("AI: I don't know.");
         }
     }
 
