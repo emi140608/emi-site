@@ -22,6 +22,13 @@
             overflow: hidden;
         }
 
+        @keyframes bgWobble {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(4deg); }
+            50% { transform: rotate(-4deg); }
+            75% { transform: rotate(4deg); }
+        }
+
         .content {
             width: 80%;
             max-width: 800px;
@@ -75,6 +82,37 @@
             border-radius: 8px;
         }
 
+        .calculator {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .calc-btn {
+            padding: 20px;
+            font-size: 24px;
+            border: none;
+            background-color: #f1f1f1;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .calc-btn:hover {
+            background-color: #ddd;
+        }
+
+        .calc-display {
+            grid-column: span 4;
+            padding: 20px;
+            font-size: 32px;
+            text-align: right;
+            background-color: #f1f1f1;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+        }
+
         canvas {
             width: 100%;
             max-width: 300px;
@@ -97,6 +135,14 @@
                 font-size: 2rem;
             }
 
+            .calc-btn {
+                font-size: 18px;
+            }
+
+            .calc-display {
+                font-size: 28px;
+            }
+
             canvas {
                 max-width: 100%;
                 height: 250px;
@@ -107,15 +153,102 @@
 <body>
 
 <div class="content">
+    <div class="section" id="captchaSection">
+        <h1>Verify you're not a robot</h1>
+        <p>The password is "cat" in Morse code: <span id="morseCode">-.-. .- -</span></p>
+        <input type="text" id="passwordInput" placeholder="Enter password" />
+        <button onclick="verifyPassword()">Verify</button>
+    </div>
+
+    <div class="section" id="calculatorSection">
+        <h1>Calculator</h1>
+        <div class="calc-display" id="calcDisplay">0</div>
+        <div class="calculator">
+            <button class="calc-btn" onclick="appendToDisplay('7')">7</button>
+            <button class="calc-btn" onclick="appendToDisplay('8')">8</button>
+            <button class="calc-btn" onclick="appendToDisplay('9')">9</button>
+            <button class="calc-btn" onclick="appendToDisplay('/')">/</button>
+            <button class="calc-btn" onclick="appendToDisplay('4')">4</button>
+            <button class="calc-btn" onclick="appendToDisplay('5')">5</button>
+            <button class="calc-btn" onclick="appendToDisplay('6')">6</button>
+            <button class="calc-btn" onclick="appendToDisplay('*')">*</button>
+            <button class="calc-btn" onclick="appendToDisplay('1')">1</button>
+            <button class="calc-btn" onclick="appendToDisplay('2')">2</button>
+            <button class="calc-btn" onclick="appendToDisplay('3')">3</button>
+            <button class="calc-btn" onclick="appendToDisplay('-')">-</button>
+            <button class="calc-btn" onclick="appendToDisplay('0')">0</button>
+            <button class="calc-btn" onclick="clearDisplay()">C</button>
+            <button class="calc-btn" onclick="triggerSnakeGame()">=</button>
+            <button class="calc-btn" onclick="appendToDisplay('+')">+</button>
+        </div>
+    </div>
+
     <div class="section" id="snakeGameSection">
         <h1>Snake Game</h1>
         <canvas id="snakeGame"></canvas>
         <button class="restart-btn" onclick="resetGame()">Restart Game</button>
     </div>
-    <button onclick="startSnakeGame()">Start Snake Game</button>
+
+    <button onclick="startCaptcha()">Start</button>
 </div>
 
 <script>
+    // Password Verification
+    function verifyPassword() {
+        const password = document.getElementById('passwordInput').value.trim();
+        const morseCodeForCat = "-.-. .- -";  // Morse code for 'cat'
+
+        if (password === morseCodeForCat) {
+            document.getElementById('captchaSection').style.display = 'none';
+            document.getElementById('calculatorSection').style.display = 'block';
+        } else {
+            alert("Incorrect Password!");
+        }
+    }
+
+    let equalPressCount = 0;  // Counter for "=" presses
+    let randomNumber = 0;  // Store the random number
+    let snakeInterval;  // Interval for snake movement
+    let gameRunning = false;  // Game state
+
+    // Simplified calculator functions
+    function appendToDisplay(value) {
+        const display = document.getElementById('calcDisplay');
+        if (display.innerText === "0") {
+            display.innerText = value;
+        } else {
+            display.innerText += value;
+        }
+    }
+
+    function clearDisplay() {
+        document.getElementById('calcDisplay').innerText = "0";
+    }
+
+    function triggerSnakeGame() {
+        const displayValue = document.getElementById('calcDisplay').innerText;
+
+        // If "1 + 1" is entered, open YouTube Rick Roll
+        if (displayValue === "1+1") {
+            window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Rickroll link
+            return;
+        }
+
+        equalPressCount++;
+        randomNumber = Math.floor(Math.random() * 100);  // Generate a random number
+
+        // Update the calculator display with the random number
+        document.getElementById('calcDisplay').innerText = randomNumber;
+
+        if (equalPressCount === 5) {
+            if (!gameRunning) {
+                startSnakeGame();
+            }
+            equalPressCount = 0;
+        }
+    }
+
+    // Snake Game Code
     const canvas = document.getElementById('snakeGame');
     const ctx = canvas.getContext('2d');
     canvas.width = 300;
@@ -126,21 +259,14 @@
     let direction = 'RIGHT';
     let score = 0;
     const gameSpeed = 100;  // Constant speed for the snake
-    let gameInterval;
-    let gameRunning = false;
 
-    // Start the Snake Game
     function startSnakeGame() {
+        document.getElementById('calculatorSection').style.display = 'none';
         document.getElementById('snakeGameSection').style.display = 'block';
         gameRunning = true;
-        snake = [{ x: 50, y: 50 }];
-        direction = 'RIGHT';
-        score = 0;
-        food = generateFood();
-        gameInterval = setInterval(updateGame, gameSpeed);
+        snakeInterval = setInterval(updateGame, gameSpeed);
     }
 
-    // Game loop to update the game state
     function updateGame() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         moveSnake();
@@ -149,20 +275,24 @@
         checkCollisions();
     }
 
-    // Move the snake based on the current direction
     function moveSnake() {
         const head = { ...snake[0] };
-
         if (direction === 'RIGHT') head.x += 10;
         if (direction === 'LEFT') head.x -= 10;
         if (direction === 'UP') head.y -= 10;
         if (direction === 'DOWN') head.y += 10;
 
         snake.unshift(head);
-        snake.pop();
+
+        // If the snake eats food, add another segment at the end
+        if (head.x === food.x && head.y === food.y) {
+            score++;
+            food = { x: Math.floor(Math.random() * 30) * 10, y: Math.floor(Math.random() * 30) * 10 }; // Reposition food
+        } else {
+            snake.pop();
+        }
     }
 
-    // Draw the snake on the canvas
     function drawSnake() {
         snake.forEach(part => {
             ctx.fillStyle = "green";
@@ -170,59 +300,56 @@
         });
     }
 
-    // Draw the food (red square) on the canvas
     function drawFood() {
         ctx.fillStyle = "red";
         ctx.fillRect(food.x, food.y, 10, 10);
     }
 
-    // Check if the snake eats the food or collides with itself or the walls
     function checkCollisions() {
         const head = snake[0];
 
-        // Check if snake eats food
-        if (head.x === food.x && head.y === food.y) {
-            score++;
-            food = generateFood(); // Reposition food
-            snake.push({ x: snake[snake.length - 1].x, y: snake[snake.length - 1].y }); // Grow the snake
+        // Check if the snake hits the wall
+        if (head.x >= canvas.width || head.x < 0 || head.y >= canvas.height || head.y < 0) {
+            endGame();
         }
 
-        // Check for wall collisions
-        if (head.x < 0 || head.y < 0 || head.x >= canvas.width || head.y >= canvas.height) {
-            alert("Game Over! Final Score: " + score);
-            resetGame();
-        }
-
-        // Check for snake self-collision
+        // Check if the snake collides with itself
         for (let i = 1; i < snake.length; i++) {
             if (head.x === snake[i].x && head.y === snake[i].y) {
-                alert("Game Over! Final Score: " + score);
-                resetGame();
+                endGame();
             }
         }
     }
 
-    // Generate a new random food position
-    function generateFood() {
-        const x = Math.floor(Math.random() * 30) * 10;
-        const y = Math.floor(Math.random() * 30) * 10;
-        return { x, y };
+    function endGame() {
+        clearInterval(snakeInterval);
+        alert("Game Over!");
+        resetGame();
     }
 
-    // Reset the game when game over or restart button is pressed
     function resetGame() {
-        clearInterval(gameInterval);
+        clearInterval(snakeInterval);
+        snake = [{ x: 50, y: 50 }];
+        food = { x: 100, y: 100 };
+        direction = 'RIGHT';
+        score = 0;
         gameRunning = false;
         document.getElementById('snakeGameSection').style.display = 'none';
+        document.getElementById('calculatorSection').style.display = 'block';
     }
 
-    // Listen for arrow key presses to control the snake direction
     document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowUp' && direction !== 'DOWN') direction = 'UP';
         if (e.key === 'ArrowDown' && direction !== 'UP') direction = 'DOWN';
         if (e.key === 'ArrowLeft' && direction !== 'RIGHT') direction = 'LEFT';
         if (e.key === 'ArrowRight' && direction !== 'LEFT') direction = 'RIGHT';
     });
+
+    function startCaptcha() {
+        document.getElementById('captchaSection').style.display = 'block';
+        document.getElementById('calculatorSection').style.display = 'none';
+        document.getElementById('snakeGameSection').style.display = 'none';
+    }
 </script>
 
 </body>
